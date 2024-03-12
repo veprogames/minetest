@@ -578,6 +578,13 @@ void Sky::draw_sun(video::IVideoDriver *driver, const video::SColor &suncolor,
 	// A magic number that contributes to the ratio 1.57 sun/moon size difference.
 	constexpr float sunsize = 0.07;
 
+	// In Tromsø, Polar Days occur (example)
+	const float TROMSO_LATITUDE = 69.0f;
+	const float AXIAL_TILT_OF_EARTH = 23.4;
+
+	// current height of the sun, on summer solstice
+	float height = sin(wicked_time_of_day * 2.0 * PI) * (90.0f - TROMSO_LATITUDE) + AXIAL_TILT_OF_EARTH;
+
 	static const u16 indices[] = {0, 1, 2, 0, 2, 3};
 	std::array<video::S3DVertex, 4> vertices;
 	if (!m_sun_texture) {
@@ -595,7 +602,7 @@ void Sky::draw_sun(video::IVideoDriver *driver, const video::SColor &suncolor,
 		const video::SColor colors[4] = {c1, c2, suncolor, suncolor2};
 		for (int i = 0; i < 4; i++) {
 			draw_sky_body(vertices, -sunsizes[i], sunsizes[i], colors[i]);
-			place_sky_body(vertices, 90, wicked_time_of_day * 360 - 90);
+			place_sky_body(vertices, wicked_time_of_day * 360.0f, height);
 			driver->drawIndexedTriangleList(&vertices[0], 4, indices, 2);
 		}
 	} else {
@@ -609,7 +616,7 @@ void Sky::draw_sun(video::IVideoDriver *driver, const video::SColor &suncolor,
 		else
 			c = video::SColor(255, 255, 255, 255);
 		draw_sky_body(vertices, -d, d, c);
-		place_sky_body(vertices, 90, wicked_time_of_day * 360 - 90);
+		place_sky_body(vertices, wicked_time_of_day * 360.0f, height);
 		driver->drawIndexedTriangleList(&vertices[0], 4, indices, 2);
 	}
 }
@@ -716,21 +723,18 @@ void Sky::draw_sky_body(std::array<video::S3DVertex, 4> &vertices, float pos_1, 
 
 
 void Sky::place_sky_body(
-	std::array<video::S3DVertex, 4> &vertices, float horizon_position, float day_position)
+	std::array<video::S3DVertex, 4> &vertices, float azimuth, float height)
 	/*
 	* Place body in the sky.
 	* vertices: The body as a rectangle of 4 vertices
-	* horizon_position: turn the body around the Y axis
-	* day_position: turn the body around the Z axis, to place it depending of the time of the day
+	* azimuth: direction
+	* height: height
 	*/
 {
-	v3f centrum = getSkyBodyPosition(horizon_position, day_position, m_sky_params.body_orbit_tilt);
-	v3f untilted_centrum = getSkyBodyPosition(horizon_position, day_position, 0.f);
 	for (video::S3DVertex &vertex : vertices) {
 		// Body is directed to -Z (south) by default
-		vertex.Pos.rotateXZBy(horizon_position);
-		vertex.Pos.rotateXYBy(day_position);
-		vertex.Pos += centrum - untilted_centrum;
+		vertex.Pos.rotateYZBy(height);
+		vertex.Pos.rotateXZBy(azimuth);
 	}
 }
 
