@@ -583,7 +583,7 @@ void Sky::draw_sun(video::IVideoDriver *driver, const video::SColor &suncolor,
 	const float AXIAL_TILT_OF_EARTH = 23.4;
 
 	// current height of the sun, on summer solstice
-	float height = sin(wicked_time_of_day * 2.0 * PI) * (90.0f - TROMSO_LATITUDE) + AXIAL_TILT_OF_EARTH;
+	float height = -cos(wicked_time_of_day * 2.0 * PI) * (90.0f - TROMSO_LATITUDE) + AXIAL_TILT_OF_EARTH;
 
 	static const u16 indices[] = {0, 1, 2, 0, 2, 3};
 	std::array<video::S3DVertex, 4> vertices;
@@ -731,10 +731,13 @@ void Sky::place_sky_body(
 	* height: height
 	*/
 {
+	const float AZIMUTH_OFFSET = 180.f;
+
 	for (video::S3DVertex &vertex : vertices) {
 		// Body is directed to -Z (south) by default
 		vertex.Pos.rotateYZBy(height);
-		vertex.Pos.rotateXZBy(azimuth);
+		// Make it act so that 0° = North, 180° = South
+		vertex.Pos.rotateXZBy(-azimuth + AZIMUTH_OFFSET);
 	}
 }
 
