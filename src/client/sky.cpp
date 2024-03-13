@@ -263,24 +263,24 @@ void Sky::render()
 		// (textures/base/pack/sunrisebg.png)
 		if (m_sun_params.sunrise_visible) {
 			driver->setMaterial(m_materials[2]);
-			float mid1 = 0.25;
-			float mid = wicked_time_of_day < 0.5 ? mid1 : (1.0 - mid1);
-			float a_ = 1.0f - std::fabs(wicked_time_of_day - mid) * 35.0f;
-			float a = easeCurve(MYMAX(0, MYMIN(1, a_)));
+
+			float height = get_sun_height(wicked_time_of_day);
+			height += 3.f;
+			height /= 18.f;
+			height = std::fabs(height);
+			height = easeCurve(MYMAX(0, MYMIN(1, height)));
+			float strength = 1.f - height;
+
+			float offset = (-1 + strength) * 0.22;
+
 			//std::cerr<<"a_="<<a_<<" a="<<a<<std::endl;
 			video::SColor c(255, 255, 255, 255);
-			float y = -(1.0 - a) * 0.22;
-			vertices[0] = video::S3DVertex(-1, -0.05 + y, -1, 0, 0, 1, c, t, t);
-			vertices[1] = video::S3DVertex( 1, -0.05 + y, -1, 0, 0, 1, c, o, t);
-			vertices[2] = video::S3DVertex( 1,   0.2 + y, -1, 0, 0, 1, c, o, o);
-			vertices[3] = video::S3DVertex(-1,   0.2 + y, -1, 0, 0, 1, c, t, o);
+			vertices[0] = video::S3DVertex(-1, -0.05 + offset, -1, 0, 0, 1, c, t, t);
+			vertices[1] = video::S3DVertex( 1, -0.05 + offset, -1, 0, 0, 1, c, o, t);
+			vertices[2] = video::S3DVertex( 1,   0.2 + offset, -1, 0, 0, 1, c, o, o);
+			vertices[3] = video::S3DVertex(-1,   0.2 + offset, -1, 0, 0, 1, c, t, o);
 			for (video::S3DVertex &vertex : vertices) {
-				if (wicked_time_of_day < 0.5)
-					// Switch from -Z (south) to +X (east)
-					vertex.Pos.rotateXZBy(90);
-				else
-					// Switch from -Z (south) to -X (west)
-					vertex.Pos.rotateXZBy(-90);
+				vertex.Pos.rotateXZBy(-get_sun_azimuth(wicked_time_of_day) + 180.f);
 			}
 			driver->drawIndexedTriangleList(&vertices[0], 4, indices, 2);
 		}
@@ -571,12 +571,11 @@ float Sky::get_sun_azimuth(float wicked_time_of_day) {
 }
 
 float Sky::get_sun_height(float wicked_time_of_day) {
-	// In Tromsø, Polar Days occur (example)
-	const float TROMSO_LATITUDE = 69.0f;
+	const float LATITUDE = 50.0f;
 	const float AXIAL_TILT_OF_EARTH = 23.4;
 
 	// + AXIAL_TILT_OF_EARTH -> summer solstice
-	return -cos(wicked_time_of_day * 2.0 * PI) * (90.0f - TROMSO_LATITUDE) + AXIAL_TILT_OF_EARTH;
+	return -cos(wicked_time_of_day * 2.0 * PI) * (90.0f - LATITUDE) + AXIAL_TILT_OF_EARTH;
 }
 
 void Sky::draw_sun(video::IVideoDriver *driver, const video::SColor &suncolor,
