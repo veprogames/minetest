@@ -566,6 +566,19 @@ v3f Sky::getMoonDirection()
 	return getSkyBodyPosition(270, getWickedTimeOfDay(m_time_of_day) * 360 - 90, m_sky_params.body_orbit_tilt);
 }
 
+float Sky::get_sun_azimuth(float wicked_time_of_day) {
+	return wicked_time_of_day * 360.f;
+}
+
+float Sky::get_sun_height(float wicked_time_of_day) {
+	// In Tromsø, Polar Days occur (example)
+	const float TROMSO_LATITUDE = 69.0f;
+	const float AXIAL_TILT_OF_EARTH = 23.4;
+
+	// + AXIAL_TILT_OF_EARTH -> summer solstice
+	return -cos(wicked_time_of_day * 2.0 * PI) * (90.0f - TROMSO_LATITUDE) + AXIAL_TILT_OF_EARTH;
+}
+
 void Sky::draw_sun(video::IVideoDriver *driver, const video::SColor &suncolor,
 	const video::SColor &suncolor2, float wicked_time_of_day)
 	/* Draw sun in the sky.
@@ -578,12 +591,8 @@ void Sky::draw_sun(video::IVideoDriver *driver, const video::SColor &suncolor,
 	// A magic number that contributes to the ratio 1.57 sun/moon size difference.
 	constexpr float sunsize = 0.07;
 
-	// In Tromsø, Polar Days occur (example)
-	const float TROMSO_LATITUDE = 69.0f;
-	const float AXIAL_TILT_OF_EARTH = 23.4;
-
-	// current height of the sun, on summer solstice
-	float height = -cos(wicked_time_of_day * 2.0 * PI) * (90.0f - TROMSO_LATITUDE) + AXIAL_TILT_OF_EARTH;
+	float azimuth = get_sun_azimuth(wicked_time_of_day);
+	float height = get_sun_height(wicked_time_of_day);
 
 	static const u16 indices[] = {0, 1, 2, 0, 2, 3};
 	std::array<video::S3DVertex, 4> vertices;
@@ -602,7 +611,7 @@ void Sky::draw_sun(video::IVideoDriver *driver, const video::SColor &suncolor,
 		const video::SColor colors[4] = {c1, c2, suncolor, suncolor2};
 		for (int i = 0; i < 4; i++) {
 			draw_sky_body(vertices, -sunsizes[i], sunsizes[i], colors[i]);
-			place_sky_body(vertices, wicked_time_of_day * 360.0f, height);
+			place_sky_body(vertices, azimuth, height);
 			driver->drawIndexedTriangleList(&vertices[0], 4, indices, 2);
 		}
 	} else {
@@ -616,11 +625,18 @@ void Sky::draw_sun(video::IVideoDriver *driver, const video::SColor &suncolor,
 		else
 			c = video::SColor(255, 255, 255, 255);
 		draw_sky_body(vertices, -d, d, c);
-		place_sky_body(vertices, wicked_time_of_day * 360.0f, height);
+		place_sky_body(vertices, azimuth, height);
 		driver->drawIndexedTriangleList(&vertices[0], 4, indices, 2);
 	}
 }
 
+float Sky::get_moon_azimuth(float wicked_time_of_day) {
+	return get_sun_azimuth(wicked_time_of_day + .5f);
+}
+
+float Sky::get_moon_height(float wicked_time_of_day) {
+	return get_sun_height(wicked_time_of_day + .5f);
+}
 
 void Sky::draw_moon(video::IVideoDriver *driver, const video::SColor &mooncolor,
 	const video::SColor &mooncolor2, float wicked_time_of_day)
@@ -635,6 +651,9 @@ void Sky::draw_moon(video::IVideoDriver *driver, const video::SColor &mooncolor,
 {
 	// A magic number that contributes to the ratio 1.57 sun/moon size difference.
 	constexpr float moonsize = 0.04;
+
+	float azimuth = get_moon_azimuth(wicked_time_of_day);
+	float height = get_moon_height(wicked_time_of_day);
 
 	static const u16 indices[] = {0, 1, 2, 0, 2, 3};
 	std::array<video::S3DVertex, 4> vertices;
@@ -659,7 +678,7 @@ void Sky::draw_moon(video::IVideoDriver *driver, const video::SColor &mooncolor,
 		const video::SColor colors[4] = {c1, c2, mooncolor, mooncolor2};
 		for (int i = 0; i < 4; i++) {
 			draw_sky_body(vertices, moonsizes_1[i], moonsizes_2[i], colors[i]);
-			place_sky_body(vertices, -90, wicked_time_of_day * 360 - 90);
+			place_sky_body(vertices, azimuth, height);
 			driver->drawIndexedTriangleList(&vertices[0], 4, indices, 2);
 		}
 	} else {
@@ -673,7 +692,7 @@ void Sky::draw_moon(video::IVideoDriver *driver, const video::SColor &mooncolor,
 		else
 			c = video::SColor(255, 255, 255, 255);
 		draw_sky_body(vertices, -d, d, c);
-		place_sky_body(vertices, -90, wicked_time_of_day * 360 - 90);
+		place_sky_body(vertices, azimuth, height);
 		driver->drawIndexedTriangleList(&vertices[0], 4, indices, 2);
 	}
 }

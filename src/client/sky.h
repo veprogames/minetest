@@ -217,6 +217,12 @@ private:
 
 	void updateStars();
 
+	float get_sun_azimuth(float wicked_time_of_day);
+	float get_sun_height(float wicked_time_of_day);
+
+	float get_moon_azimuth(float wicked_time_of_day);
+	float get_moon_height(float wicked_time_of_day);
+
 	void draw_sun(video::IVideoDriver *driver, const video::SColor &suncolor,
 		const video::SColor &suncolor2, float wicked_time_of_day);
 	void draw_moon(video::IVideoDriver *driver, const video::SColor &mooncolor,
