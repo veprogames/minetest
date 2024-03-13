@@ -128,6 +128,8 @@ public:
 			return m_sky_params.fog_color;
 		return getBgColor();
 	}
+	
+	float get_sun_ambient_brightness(float time_of_day);
 
 private:
 	aabb3f m_box;

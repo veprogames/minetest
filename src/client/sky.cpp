@@ -578,6 +578,14 @@ float Sky::get_sun_height(float wicked_time_of_day) {
 	return -cos(wicked_time_of_day * 2.0 * PI) * (90.0f - LATITUDE) + AXIAL_TILT_OF_EARTH;
 }
 
+float Sky::get_sun_ambient_brightness(float time_of_day) {
+	float height = get_sun_height(time_of_day);
+	height /= 18.f;
+	height = MYMAX(-1, MYMIN(0, height));
+
+	return easeCurve(1.f + height);
+}
+
 void Sky::draw_sun(video::IVideoDriver *driver, const video::SColor &suncolor,
 	const video::SColor &suncolor2, float wicked_time_of_day)
 	/* Draw sun in the sky.

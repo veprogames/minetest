@@ -3980,8 +3980,14 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 	/*
 		Calculate general brightness
 	*/
+	float time_of_day_smooth = runData.time_of_day_smooth;
+	float time_of_day = client->getEnv().getTimeOfDayF();
+
+	// TODO: bring back day/night ratio override
 	u32 daynight_ratio = client->getEnv().getDayNightRatio();
-	float time_brightness = decode_light_f((float)daynight_ratio / 1000.0);
+	//float time_brightness = decode_light_f((float)daynight_ratio / 1000.0);
+	
+	float time_brightness = sky->get_sun_ambient_brightness(time_of_day_smooth);
 	float direct_brightness;
 	bool sunlight_seen;
 
@@ -3998,9 +4004,6 @@ void Game::updateFrame(ProfilerGraph *graph, RunStats *stats, f32 dtime,
 					daynight_ratio, (int)(old_brightness * 255.5), &sunlight_seen)
 				    / 255.0;
 	}
-
-	float time_of_day_smooth = runData.time_of_day_smooth;
-	float time_of_day = client->getEnv().getTimeOfDayF();
 
 	static const float maxsm = 0.05f;
 	static const float todsm = 0.05f;
