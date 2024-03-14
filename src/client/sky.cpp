@@ -571,11 +571,12 @@ float Sky::get_sun_azimuth(float wicked_time_of_day) {
 }
 
 float Sky::get_sun_height(float wicked_time_of_day) {
-	const float LATITUDE = 50.0f;
-	const float AXIAL_TILT_OF_EARTH = 23.4;
+	const float LATITUDE = 60.0f;
+	const float AXIAL_TILT_OF_EARTH = 23.4f;
 
 	// + AXIAL_TILT_OF_EARTH -> summer solstice
-	return -cos(wicked_time_of_day * 2.0 * PI) * (90.0f - LATITUDE) + AXIAL_TILT_OF_EARTH;
+	// - AXIAL_TILT_OF_EARTH -> winter solstice
+	return -cos(wicked_time_of_day * 2.0 * PI) * (90.0f - LATITUDE) - AXIAL_TILT_OF_EARTH;
 }
 
 float Sky::get_sun_ambient_brightness(float time_of_day) {
@@ -709,12 +710,14 @@ void Sky::draw_stars(video::IVideoDriver * driver, float wicked_time_of_day)
 	// Tune values so that stars first appear just after the sun
 	// disappears over the horizon, and disappear just before the sun
 	// appears over the horizon.
-	// Also tune so that stars are at full brightness from time 20000
-	// to time 4000.
 
-	float tod = wicked_time_of_day < 0.5f ? wicked_time_of_day : (1.0f - wicked_time_of_day);
 	float day_opacity = clamp(m_star_params.day_opacity, 0.0f, 1.0f);
-	float starbrightness = (0.25f - std::abs(tod)) * 20.0f;
+
+	float sun_height = get_sun_height(wicked_time_of_day);
+	sun_height += 6.f;
+	sun_height /= 24.f;
+	sun_height = clamp(sun_height, -1.f, 0.f);
+	float starbrightness = -sun_height;
 	float alpha = clamp(starbrightness, day_opacity, 1.0f);
 
 	video::SColorf color(m_star_params.starcolor);
